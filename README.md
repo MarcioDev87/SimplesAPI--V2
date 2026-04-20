@@ -29,6 +29,10 @@ WHATSAPP_DEFAULT_COUNTRY_CODE=55
 WHATSAPP_DELAY_MIN_MS=2000
 WHATSAPP_DELAY_MAX_MS=5000
 REMINDER_SEND_LOG_PATH=data/reminder-sends.json
+DAILY_AGENDA_WHATSAPP_NUMBER=85999169193
+DAILY_AGENDA_TIMEZONE=America/Fortaleza
+AGENDA_PRIMARY_PROFESSIONAL=Ilara
+AGENDA_PRIMARY_PROFESSIONAL_LABEL=Dra. Ilara
 
 POSTGRES_DATABASE=evolution
 POSTGRES_USERNAME=evolution
@@ -143,12 +147,22 @@ Use os previews antes do envio real:
 ```bash
 bun run reminders:preview:tomorrow
 bun run reminders:preview:today
+bun run agenda:preview:today
 ```
 
 Agenda sugerida:
 
 1. Noite: `reminders:send:tomorrow` para consultas do dia seguinte.
 2. Manha: `reminders:send:today` para consultas do mesmo dia.
+3. 07:30: `agenda:send:today` para enviar o resumo "Bom dia flor do dia!" por WhatsApp.
+
+Para enviar o resumo diario da agenda da Dra. Ilara por WhatsApp:
+
+```bash
+bun run agenda:send:today
+```
+
+O destinatario padrao vem de `DAILY_AGENDA_WHATSAPP_NUMBER`.
 
 ## Teste avulso
 
