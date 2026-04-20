@@ -22,8 +22,51 @@ function getAppointmentTime(patient) {
   return patient.dataFormatada?.split(", ").at(-1) || "no horario agendado";
 }
 
+function formatProfessionalName(patient) {
+  return String(patient.profissional || "Dra. Ilara").replace(/\s+/g, " ").trim();
+}
+
+function getAppointmentLocalHour(patient) {
+  const date = new Date(patient.data);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return Number(
+    new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone: process.env.CLINIC_TIMEZONE || "America/Fortaleza",
+    }).format(date)
+  );
+}
+
+function isInPeriod(patient, period) {
+  if (period !== "afternoon") {
+    return true;
+  }
+
+  const hour = getAppointmentLocalHour(patient);
+  return hour !== null && hour >= 12;
+}
+
 function buildDefaultMessage(patient, mode) {
   const dayText = mode === "morning" ? "hoje" : "amanha";
+
+  if (mode === "afternoon") {
+    return [
+      "🌞 Bom dia!",
+      "",
+      `Passando aqui com carinho para lembrar da sua consulta hoje à tarde, às *${getAppointmentTime(patient)}*, com a *${formatProfessionalName(patient)}* 🦷✨`,
+      "",
+      "Estamos te esperando para cuidar do seu sorriso com toda atenção 💙",
+      "",
+      "Se por algum motivo não puder comparecer, nos avise, por favor, para que possamos organizar a agenda da melhor forma 🙏",
+      "",
+      "Até mais tarde! 😄",
+    ].join("\n");
+  }
 
   if (mode === "morning") {
     return [
@@ -71,8 +114,13 @@ export async function buildReminderPlanByDate(date, options = {}) {
   const response = await buildPatientsResponseByDate(date);
   const reminders = [];
   const skipped = [];
+  const period = options.period || (options.mode === "afternoon" ? "afternoon" : "all");
 
   for (const patient of response.pacientes) {
+    if (!isInPeriod(patient, period)) {
+      continue;
+    }
+
     const number = normalizeWhatsAppNumber(patient.telefone);
 
     if (!number) {

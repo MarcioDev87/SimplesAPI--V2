@@ -11,6 +11,8 @@
     "reminders:send:tomorrow": "bun run src/send-reminders.mjs --offset=1 --mode=evening --dry-run=false",
     "reminders:preview:today": "bun run src/send-reminders.mjs --offset=0 --mode=morning",
     "reminders:send:today": "bun run src/send-reminders.mjs --offset=0 --mode=morning --dry-run=false",
+    "reminders:preview:afternoon": "bun run src/send-reminders.mjs --offset=0 --mode=afternoon --period=afternoon",
+    "reminders:send:afternoon": "bun run src/send-reminders.mjs --offset=0 --mode=afternoon --period=afternoon --dry-run=false",
     "agenda:preview:today": "bun run src/send-daily-agenda-whatsapp.mjs",
     "agenda:send:today": "bun run src/send-daily-agenda-whatsapp.mjs --dry-run=false"
   },

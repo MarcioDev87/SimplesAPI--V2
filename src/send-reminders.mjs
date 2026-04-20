@@ -40,6 +40,7 @@ const data = resolveDate(args);
 const dryRun = args["dry-run"] !== "false";
 const mode = args.mode || (Number(args.offset || 0) > 0 ? "evening" : "morning");
 const force = args.force === "true";
+const period = args.period || (mode === "afternoon" ? "afternoon" : undefined);
 
 ensureSimplesDentalConfig();
 
@@ -47,6 +48,7 @@ const result = await sendAppointmentRemindersByDate(data, {
   dryRun,
   force,
   mode,
+  period,
   template: args.template,
 });
 

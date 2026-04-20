@@ -53,7 +53,7 @@ app.get("/pacientes", async (req, res) => {
 });
 
 app.get("/lembretes", async (req, res) => {
-  const { data, mode, template } = req.query;
+  const { data, mode, period, template } = req.query;
 
   if (typeof data !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
     return res.status(400).json({
@@ -66,6 +66,7 @@ app.get("/lembretes", async (req, res) => {
     ensureSimplesDentalConfig();
     const response = await buildReminderPlanByDate(data, {
       mode: typeof mode === "string" ? mode : undefined,
+      period: typeof period === "string" ? period : undefined,
       template: typeof template === "string" ? template : undefined,
     });
 
@@ -89,7 +90,7 @@ app.get("/lembretes", async (req, res) => {
 });
 
 app.post("/lembretes/enviar", async (req, res) => {
-  const { data, dryRun = true, force = false, mode, template } = req.body || {};
+  const { data, dryRun = true, force = false, mode, period, template } = req.body || {};
 
   if (typeof data !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
     return res.status(400).json({
@@ -104,6 +105,7 @@ app.post("/lembretes/enviar", async (req, res) => {
       dryRun: dryRun !== false,
       force: force === true,
       mode: typeof mode === "string" ? mode : undefined,
+      period: typeof period === "string" ? period : undefined,
       template: typeof template === "string" ? template : undefined,
     });
 

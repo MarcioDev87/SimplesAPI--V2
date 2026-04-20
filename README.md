@@ -147,6 +147,7 @@ Use os previews antes do envio real:
 ```bash
 bun run reminders:preview:tomorrow
 bun run reminders:preview:today
+bun run reminders:preview:afternoon
 bun run agenda:preview:today
 ```
 
@@ -155,6 +156,7 @@ Agenda sugerida:
 1. Noite: `reminders:send:tomorrow` para consultas do dia seguinte.
 2. Manha: `reminders:send:today` para consultas do mesmo dia.
 3. 07:30: `agenda:send:today` para enviar o resumo "Bom dia flor do dia!" por WhatsApp.
+4. Antes do turno da tarde: `reminders:send:afternoon` para lembrar pacientes de hoje a tarde.
 
 Para enviar o resumo diario da agenda da Dra. Ilara por WhatsApp:
 
