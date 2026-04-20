@@ -12,8 +12,13 @@ coverage
 
 # logs
 logs
+data
 _.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+.codex
+tmp-*.mjs
+test-playwright.mjs
+*.doc
 
 # dotenv environment variable files
 .env

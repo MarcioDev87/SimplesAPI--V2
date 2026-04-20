@@ -1,19 +1,23 @@
 {
-  "name": "svc-playwright",
+  "name": "simples-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API para consultar pacientes agendados no Simples Dental",
+  "main": "src/index.mjs",
   "scripts": {
-    "dev": "bun run src/index.mjs"
+    "dev": "bun run src/index.mjs",
+    "start": "bun run src/index.mjs",
+    "whatsapp:test": "bun run src/send-test-message.mjs",
+    "reminders:preview:tomorrow": "bun run src/send-reminders.mjs --offset=1 --mode=evening",
+    "reminders:send:tomorrow": "bun run src/send-reminders.mjs --offset=1 --mode=evening --dry-run=false",
+    "reminders:preview:today": "bun run src/send-reminders.mjs --offset=0 --mode=morning",
+    "reminders:send:today": "bun run src/send-reminders.mjs --offset=0 --mode=morning --dry-run=false"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cheerio": "^1.1.2",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "playwright": "^1.56.0"
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
   },
   "private": true,
   "devDependencies": {

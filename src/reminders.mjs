@@ -1,0 +1,187 @@
+import { buildPatientsResponseByDate } from "./simples-dental.mjs";
+import {
+  ensureEvolutionConfig,
+  normalizeWhatsAppNumber,
+  randomDelayMs,
+  sendTextMessage,
+  sendTypingPresence,
+} from "./evolution-whatsapp.mjs";
+import {
+  buildSendKey,
+  markReminderSent,
+  wasReminderSent,
+} from "./send-log.mjs";
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getClinicName() {
+  return process.env.CLINIC_NAME || "Clínica Dra. Ilara Queiroz";
+}
+
+function getAppointmentTime(patient) {
+  return patient.dataFormatada?.split(", ").at(-1) || "no horario agendado";
+}
+
+function buildDefaultMessage(patient, mode) {
+  const dayText = mode === "morning" ? "hoje" : "amanha";
+
+  if (mode === "morning") {
+    return [
+      "Bom dia!",
+      "",
+      `Tudo bem com você, ${patient.paciente}?`,
+      `Passando aqui com carinho para confirmar a sua consulta agendada para ${dayText} às ${getAppointmentTime(patient)} com a ${patient.profissional || "Dra. Ilara"} 🦷✨`,
+      "",
+      "Estamos te esperando com todo cuidado e atenção de sempre 💙",
+      "",
+      "Caso aconteça algum imprevisto e você não possa comparecer, pedimos, por gentileza, que nos avise o quanto antes. Assim conseguimos reorganizar a agenda e atender outro paciente que está aguardando 🙏",
+      "",
+      "Qualquer dúvida, estamos por aqui!",
+      "Será um prazer cuidar do seu sorriso 😄",
+    ].join("\n");
+  }
+
+  return [
+    "Bom dia!",
+    "",
+    `Tudo bem com você, ${patient.paciente}?`,
+    `Passando aqui com carinho para confirmar a sua consulta agendada para ${dayText} às ${getAppointmentTime(patient)} com a ${patient.profissional || "Dra. Ilara"} 🦷✨`,
+    "",
+    "Estamos te esperando com todo cuidado e atenção de sempre 💙",
+    "",
+    "Caso aconteça algum imprevisto e você não possa comparecer, pedimos, por gentileza, que nos avise o quanto antes. Assim conseguimos reorganizar a agenda e atender outro paciente que está aguardando 🙏",
+    "",
+    "Qualquer dúvida, estamos por aqui!",
+    "Será um prazer cuidar do seu sorriso 😄",
+  ].join("\n");
+}
+
+function buildMessage(patient, template, mode) {
+  const message = template || buildDefaultMessage(patient, mode);
+
+  return message
+    .replaceAll("{{paciente}}", patient.paciente || "")
+    .replaceAll("{{horario}}", getAppointmentTime(patient))
+    .replaceAll("{{clinica}}", getClinicName())
+    .replaceAll("{{profissional}}", patient.profissional || "")
+    .replaceAll("{{descricao}}", patient.descricao || "");
+}
+
+export async function buildReminderPlanByDate(date, options = {}) {
+  const response = await buildPatientsResponseByDate(date);
+  const reminders = [];
+  const skipped = [];
+
+  for (const patient of response.pacientes) {
+    const number = normalizeWhatsAppNumber(patient.telefone);
+
+    if (!number) {
+      skipped.push({
+        consultaId: patient.consultaId,
+        paciente: patient.paciente,
+        motivo: "telefone ausente ou invalido",
+      });
+      continue;
+    }
+
+    reminders.push({
+      consultaId: patient.consultaId,
+      paciente: patient.paciente,
+      telefoneOriginal: patient.telefone,
+      numeroWhatsApp: number,
+      horario: getAppointmentTime(patient),
+      mensagem: buildMessage(patient, options.template, options.mode),
+    });
+  }
+
+  return {
+    data: response.data,
+    profissionalAutenticado: response.profissionalAutenticado,
+    totalConsultas: response.total,
+    totalEnviaveis: reminders.length,
+    totalIgnorados: skipped.length,
+    reminders,
+    skipped,
+  };
+}
+
+export async function sendAppointmentRemindersByDate(date, options = {}) {
+  const dryRun = options.dryRun !== false;
+  const mode = options.mode || "evening";
+  const plan = await buildReminderPlanByDate(date, {
+    ...options,
+    mode,
+  });
+
+  if (dryRun) {
+    return {
+      ...plan,
+      dryRun: true,
+      sent: [],
+    };
+  }
+
+  ensureEvolutionConfig();
+
+  const sent = [];
+  const failed = [];
+  const skippedAlreadySent = [];
+
+  for (const reminder of plan.reminders) {
+    const sendKey = buildSendKey({
+      date,
+      mode,
+      consultaId: reminder.consultaId,
+    });
+
+    if (!options.force && (await wasReminderSent(sendKey))) {
+      skippedAlreadySent.push({
+        consultaId: reminder.consultaId,
+        paciente: reminder.paciente,
+        motivo: "lembrete ja enviado",
+      });
+      continue;
+    }
+
+    const delay = randomDelayMs();
+
+    try {
+      await sendTypingPresence(reminder.numeroWhatsApp, delay);
+      await sleep(delay);
+      const response = await sendTextMessage(
+        reminder.numeroWhatsApp,
+        reminder.mensagem,
+        delay
+      );
+
+      sent.push({
+        consultaId: reminder.consultaId,
+        paciente: reminder.paciente,
+        numeroWhatsApp: reminder.numeroWhatsApp,
+        status: response?.status || "sent",
+      });
+      await markReminderSent(sendKey, {
+        consultaId: reminder.consultaId,
+        paciente: reminder.paciente,
+        numeroWhatsApp: reminder.numeroWhatsApp,
+        mode,
+        responseStatus: response?.status || "sent",
+      });
+    } catch (error) {
+      failed.push({
+        consultaId: reminder.consultaId,
+        paciente: reminder.paciente,
+        numeroWhatsApp: reminder.numeroWhatsApp,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return {
+    ...plan,
+    dryRun: false,
+    sent,
+    skippedAlreadySent,
+    failed,
+  };
+}
