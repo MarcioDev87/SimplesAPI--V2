@@ -22,6 +22,10 @@ function getAppointmentTime(patient) {
   return patient.dataFormatada?.split(", ").at(-1) || "no horario agendado";
 }
 
+function getPatientFirstName(patient) {
+  return String(patient.paciente || "").trim().split(/\s+/).at(0) || "";
+}
+
 function formatProfessionalName(patient) {
   return String(patient.profissional || "Dra. Ilara").replace(/\s+/g, " ").trim();
 }
@@ -72,7 +76,7 @@ function buildDefaultMessage(patient, mode) {
     return [
       "Bom dia!",
       "",
-      `Tudo bem com você, ${patient.paciente}?`,
+      `Tudo bem com você, ${getPatientFirstName(patient)}?`,
       `Passando aqui com carinho para confirmar a sua consulta agendada para ${dayText} às ${getAppointmentTime(patient)} com a ${patient.profissional || "Dra. Ilara"} 🦷✨`,
       "",
       "Estamos te esperando com todo cuidado e atenção de sempre 💙",
@@ -87,7 +91,7 @@ function buildDefaultMessage(patient, mode) {
   return [
     "Bom dia!",
     "",
-    `Tudo bem com você, ${patient.paciente}?`,
+    `Tudo bem com você, ${getPatientFirstName(patient)}?`,
     `Passando aqui com carinho para confirmar a sua consulta agendada para ${dayText} às ${getAppointmentTime(patient)} com a ${patient.profissional || "Dra. Ilara"} 🦷✨`,
     "",
     "Estamos te esperando com todo cuidado e atenção de sempre 💙",
@@ -104,6 +108,7 @@ function buildMessage(patient, template, mode) {
 
   return message
     .replaceAll("{{paciente}}", patient.paciente || "")
+    .replaceAll("{{primeiroNome}}", getPatientFirstName(patient))
     .replaceAll("{{horario}}", getAppointmentTime(patient))
     .replaceAll("{{clinica}}", getClinicName())
     .replaceAll("{{profissional}}", patient.profissional || "")
