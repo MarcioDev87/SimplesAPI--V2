@@ -8,6 +8,11 @@ import {
   buildReminderPlanByDate,
   sendAppointmentRemindersByDate,
 } from "./reminders.mjs";
+import {
+  getReminderTemplate,
+  listReminderTemplates,
+  setReminderTemplate,
+} from "./template-store.mjs";
 
 dotenv.config();
 
@@ -85,6 +90,53 @@ app.get("/lembretes", async (req, res) => {
     return res.status(500).json({
       ok: false,
       error: message,
+    });
+  }
+});
+
+app.get("/modelos-lembrete", async (_req, res) => {
+  try {
+    return res.json({
+      ok: true,
+      modelos: await listReminderTemplates(),
+    });
+  } catch (error) {
+    console.error("Erro ao listar modelos:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error instanceof Error ? error.message : "Falha ao listar modelos.",
+    });
+  }
+});
+
+app.get("/modelos-lembrete/:key", async (req, res) => {
+  try {
+    return res.json({
+      ok: true,
+      ...(await getReminderTemplate(req.params.key)),
+    });
+  } catch (error) {
+    console.error("Erro ao buscar modelo:", error);
+    return res.status(400).json({
+      ok: false,
+      error: error instanceof Error ? error.message : "Falha ao buscar modelo.",
+    });
+  }
+});
+
+app.put("/modelos-lembrete/:key", async (req, res) => {
+  const { template } = req.body || {};
+
+  try {
+    return res.json({
+      ok: true,
+      ...(await setReminderTemplate(req.params.key, template)),
+    });
+  } catch (error) {
+    console.error("Erro ao salvar modelo:", error);
+    return res.status(400).json({
+      ok: false,
+      error: error instanceof Error ? error.message : "Falha ao salvar modelo.",
     });
   }
 });

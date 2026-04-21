@@ -29,6 +29,7 @@ WHATSAPP_DEFAULT_COUNTRY_CODE=55
 WHATSAPP_DELAY_MIN_MS=2000
 WHATSAPP_DELAY_MAX_MS=5000
 REMINDER_SEND_LOG_PATH=data/reminder-sends.json
+REMINDER_TEMPLATE_PATH=data/reminder-templates.json
 DAILY_AGENDA_WHATSAPP_NUMBER=85999169193
 DAILY_AGENDA_TIMEZONE=America/Fortaleza
 AGENDA_PRIMARY_PROFESSIONAL=Ilara
@@ -132,6 +133,32 @@ Quando `dryRun` for `false`, a API chama a Evolution API em duas etapas por paci
 O intervalo aleatorio entre mensagens usa `WHATSAPP_DELAY_MIN_MS` e `WHATSAPP_DELAY_MAX_MS`.
 
 Cada envio real fica registrado em `REMINDER_SEND_LOG_PATH`. Se o agendador rodar duas vezes para a mesma consulta e mesmo modo, a segunda execucao e ignorada. Use `force: true` somente para reenviar.
+
+## Modelos de mensagem
+
+`GET /modelos-lembrete`
+
+Lista os modelos de confirmacao e lembrete da tarde.
+
+`GET /modelos-lembrete/confirmation`
+
+Mostra o modelo usado nas confirmacoes de amanha.
+
+`GET /modelos-lembrete/afternoon`
+
+Mostra o modelo usado nos lembretes de pacientes da tarde.
+
+`PUT /modelos-lembrete/:key`
+
+Salva um modelo personalizado:
+
+```json
+{
+  "template": "Bom dia, {{primeiroNome}}! Sua consulta e as {{horario}} com {{profissional}}."
+}
+```
+
+Variaveis disponiveis: `{{primeiroNome}}`, `{{paciente}}`, `{{horario}}`, `{{profissional}}`, `{{clinica}}`, `{{descricao}}`.
 
 ## Disparo automatico
 

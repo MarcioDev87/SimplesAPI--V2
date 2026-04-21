@@ -11,6 +11,7 @@ import {
   markReminderSent,
   wasReminderSent,
 } from "./send-log.mjs";
+import { getStoredReminderTemplate } from "./template-store.mjs";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -120,6 +121,10 @@ export async function buildReminderPlanByDate(date, options = {}) {
   const reminders = [];
   const skipped = [];
   const period = options.period || (options.mode === "afternoon" ? "afternoon" : "all");
+  const template =
+    options.template === undefined
+      ? await getStoredReminderTemplate(options.mode || "evening")
+      : options.template;
 
   for (const patient of response.pacientes) {
     if (!isInPeriod(patient, period)) {
@@ -143,7 +148,7 @@ export async function buildReminderPlanByDate(date, options = {}) {
       telefoneOriginal: patient.telefone,
       numeroWhatsApp: number,
       horario: getAppointmentTime(patient),
-      mensagem: buildMessage(patient, options.template, options.mode),
+      mensagem: buildMessage(patient, template, options.mode),
     });
   }
 
@@ -199,7 +204,15 @@ export async function sendAppointmentRemindersByDate(date, options = {}) {
     const delay = randomDelayMs();
 
     try {
-      await sendTypingPresence(reminder.numeroWhatsApp, delay);
+      try {
+        await sendTypingPresence(reminder.numeroWhatsApp, delay);
+      } catch (error) {
+        console.warn(
+          `Aviso: presenca de digitacao falhou para ${reminder.paciente}, seguindo com envio: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
       await sleep(delay);
       const response = await sendTextMessage(
         reminder.numeroWhatsApp,
